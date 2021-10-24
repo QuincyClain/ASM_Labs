@@ -2,10 +2,10 @@
 .stack 256
 .data
 
-a db 2
-b db 3
-c db -3
-d db 1
+a db 1
+b db 9
+c db 3
+d db 7
 
 
 .code
@@ -23,12 +23,12 @@ d db 1
         sub al,d ; отняли от b d
         cbw ; расширяем al/ah до ax (8->16 бит)
         cmp ax,cx ; сравниваем два значения
-        ;jne p1 ; прыгаем на метку если не равны
+        jne print1 ; прыгаем на метку если не равны
         
-        mov al,a 
+        mov al,a    
         mov ah,d
         cmp al,ah
-       ; jl p1 ; прыгаем если меньше
+        jl print1 ; прыгаем если меньше
 
         ; if(2)
         mov al,b
@@ -36,14 +36,14 @@ d db 1
         mov ah,a
         sub ah,d
         cmp al,ah
-        jge p3
+        jge print3
         mov al,a
         mov ah,b
         cmp al,ah
-        jl p2
-        jmp p3
+        jl print2
+        jmp print3
 
-    p1:
+    print1:
         mov al,c
         sub al,d
         mov ah,b
@@ -53,9 +53,10 @@ d db 1
         cbw
         add bx,ax
         mov dx,bx
-        int 21h
+        mov ax,dx
+        jmp printnumber
 
-    p2:
+    print2:
         mov al,c
         mov ah,c
         imul ah
@@ -69,9 +70,10 @@ d db 1
         add bx,ax
         sub bx,4
         mov dx,bx
-        int 21h
+        mov ax,dx
+        jmp printnumber
 
-    p3:
+    print3:
         mov al,b
         mov ah,2
         imul ah
@@ -82,8 +84,47 @@ d db 1
         sub bx,ax
         add bx,8
         mov dx,bx
-        int 21h
-    ret
+        mov ax,dx
+        jmp printnumber
+    
+    printnumber:
+	    cmp ax, 0
+	    jz printifzero
+	    jnl printpositive
+	    mov dl, '-'
+	    push ax
+	    mov ah, 02h
+	    int 21h
+	    pop ax
+        not ax 
+	    inc ax
+
+
+    printpositive:
+	    cmp ax, 0
+	    jz zero
+	    mov dx, 0
+	    mov bx, 10
+	    div bx    
+	    add dl, 48
+	    push dx
+        call printpositive
+	    pop dx
+	    push ax
+	    mov ah, 02h
+	    int 21h
+	    pop ax
+        ret
+
+    zero:
+	    ret
+
+    printifzero:
+	    mov dl, 30h
+	    mov ah, 02h
+	    int 21h
+	    ret
+
     exit:
         mov ax, 4c00h
         mov al, 0
